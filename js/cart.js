@@ -117,6 +117,9 @@ new Vue({
                 .catch((error) => {
                     console.log(error);
                 });
+        },
+        add: function() {
+            
         }
     },
     filters: {
