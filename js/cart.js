@@ -2,8 +2,6 @@ new Vue({
     el: '#app',
     data: {
         res: [],
-        checkFlag: false,
-        amount: 0,
         delFlag: false,
         delId: '',
     },
@@ -22,37 +20,19 @@ new Vue({
                     if (obj.count < 1) {
                         obj.count = 1
                     }
-                obj.amount = obj.count * obj.price
-                this.amount = 0;
-                this.res.forEach(function(item, index) {
-                    if (item.checked) {
-                        this.getAmount(item, 1)
-                    }
-                })
-
                 var data = new Array();
                 data['cart_id'] = obj.cart_id
                 data['count'] = obj.count
-                data['amount'] = obj.count * obj.price
 
-                this.axios('vue/Index/setData',data);
+                this.axios('vue/Index/setData', data);
 
             } else {
                 obj.count++
-                obj.amount = obj.count * obj.price
-                this.amount = 0;
-                this.res.forEach(function(item, index) {
-                    if (item.checked) {
-                        this.getAmount(item, 1)
-                    }
-                })
-
                 var data = new Array();
                 data['cart_id'] = obj.cart_id
                 data['count'] = obj.count
-                data['amount'] = obj.count * obj.price
 
-                this.axios('vue/Index/setData',data);
+                this.axios('vue/Index/setData', data);
 
             }
         },
@@ -62,56 +42,12 @@ new Vue({
          */
         check: function(item) {
             item.checked = !item.checked
-            item.checked ? this.getAmount(item, 1) : this.getAmount(item, -1)
-
-            var flag = this.res.every(item => item.checked)
-
-            //一个为false所有为值为false
-            // var flag = this.res.every(function(item){
-            //     return item.checked
-            // })
-
-            if (flag) {
-                this.checkFlag = true
-            } else {
-                this.checkFlag = false
-            }
-        },
-        /**
-         * 商品全选
-         */
-        allCheck: function() {
-            this.checkFlag = !this.checkFlag
-            this.res.forEach(item => item.checked = this.checkFlag)
-            this.res.forEach(item => {
-                if (this.checkFlag) {
-                    this.getAmount(item, 1)
-                } else {
-                    this.getAmount(item, -1)
-                }
-
-            })
         },
         /**
          * 取消全选
          */
         outCheck: function() {
-            var _this = this
-            this.res.forEach(function(item, index) {
-                item.checked = false
-            })
-        },
-        /**
-         * 编辑选中商品总额
-         * @param  {[type]} item 单个商品的总额
-         * @param  {[type]} type 商品总额的编辑模式
-         */
-        getAmount: function(item, type) {
-            if (type > 0) {
-                this.amount += item.amount
-            } else {
-                this.amount -= item.amount
-            }
+            this.res.forEach(item => item.checked = false)
         },
         /**
          * 删除提示框的显示和隐藏,获取删除商品的id
@@ -131,6 +67,7 @@ new Vue({
             this.delFlag = false
             var data = new Array()
             data['id'] = this.delId
+
             function fn() {
                 _this.delFlag = false
                 _this.load()
@@ -144,7 +81,6 @@ new Vue({
             var _this = this;
             axios.get('vue/Index/getAll').then(function(response) {
                 _this.res = response.data
-                _this.log(_this.res)
                 _this.res.forEach(function(item, index) {
                     _this.$set(item, 'checked', false)
                 })
@@ -161,26 +97,26 @@ new Vue({
         axios: function(url, data, fn) {
             var _this = this
             axios({
-                url: url,
-                method: 'post',
-                data: data,
-                transformRequest: [function(data) {
-                    // Do whatever you want to transform the data
-                    let ret = ''
-                    for (let it in data) {
-                        ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+                    url: url,
+                    method: 'post',
+                    data: data,
+                    transformRequest: [function(data) {
+                        // Do whatever you want to transform the data
+                        let ret = ''
+                        for (let it in data) {
+                            ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+                        }
+                        return ret
+                    }],
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
                     }
-                    return ret
-                }],
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                }
-            }).then((response) => {
-                if(fn) fn()
-            })
-            .catch((error) => {
-                console.log(error);
-            });
+                }).then((response) => {
+                    if (fn) fn()
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
         }
     },
     filters: {
@@ -192,10 +128,25 @@ new Vue({
             }
         }
     },
-    mounted: function() {
-        this.$nextTick(function() {
-            this.load();
-        })
-    }
-
+    created: function() {
+            this.load()
+    },
+    computed:{
+        checkFlag: {
+            get: function() {
+                return this.res.every(item => item.checked)
+            },
+            set: function(val) {
+                this.res.forEach(item => item.checked = val)
+            }
+        },
+        allAmount: {
+            get: function() {
+                return this.res.reduce( (prev, curr) => {
+                    if (!curr.checked) return prev
+                      return prev + curr.count*curr.price
+                },0);
+            },
+        },
+    },
 })
