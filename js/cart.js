@@ -118,9 +118,6 @@ new Vue({
                     console.log(error);
                 });
         },
-        add: function() {
-            
-        }
     },
     filters: {
         money: function(value, type) {
